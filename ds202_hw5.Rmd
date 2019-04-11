@@ -1,0 +1,66 @@
+---
+title: "Homework 5"
+author: "Evan Mills"
+date: "April 4, 2019"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+1.) Import data
+```{r}
+if (file.exists("alcohol.rds")) {
+  data <- readRDS("alcohol.rds")
+} else {
+  url <- "https://xdaiisu.github.io/ds202materials/data/ames.csv"
+  data <- readr::read_csv(url)
+  saveRDS(data, file="alcohol.rds")
+} 
+```
+
+2.) Clean datat
+```{r}
+data<-data %>% separate('Date', into = c("Month", "Day", "Year"), sep = '/')
+location <- data %>% separate('Store Location', into = c("Street", "Town", "Lat/long"), sep = "\\n")
+
+location <- location %>% mutate('Lat/long' = gsub('\\(', '', location$`Lat/long`))
+location <- location %>% mutate('Lat/long' = gsub('\\)', '', location$`Lat/long`))
+location <-location %>% separate('Lat/long', into = c('Lat', 'Long'), sep = ',')
+data <- data %>% mutate('Lat' = location$Lat)
+data<- data%>% mutate('Long' = location$Long)
+```
+
+```{r}
+str(data)
+```
+Vars to be changed are Lat, Long, Vendor Number, day, month, year 
+
+```{r}
+data <- data %>% mutate(Lat = as.numeric(data$Lat))
+data <- data %>% mutate(Long = as.numeric(data$Long))
+data <- data %>% mutate('Vendor Number' = as.numeric(data$'Vendor Number'))
+data <- data %>% mutate(Day = as.numeric(data$Day))
+data <- data %>% mutate(Month = as.numeric(data$Month))
+data <- data %>% mutate(Year = as.numeric(data$Year))
+str(data)
+```
+
+3.) First overview
+```{r}
+ggplot(data = data, aes(x=data$'Lat', y=data$'Long')) + geom_point()+xlab("Latitude")+ylab("Longitude")
+
+ggplot(data = data, aes(data$'Category Name')) + geom_bar()+ theme(axis.text.x =
+                   element_text(size  = 10,
+                                angle = 45,
+                                hjust = 1,
+                                vjust = 1))
+```
+
+4.) Daily sales
+```{r}
+ggplot(data = data, aes(Day)) + geom_bar() + facet_wrap(data$Month)
+ggplot(data = data, aes(Day, 'Bottle Volume')) +geom_bar()
+```
